@@ -4,7 +4,7 @@ import sys
 
 from .commandline import CommandLine
 from .config import Config, Account, Zone
-from .utils import APIError, APIRequest, QuitApp, SECURITY_LEVELS
+from .utils import APIError, APIRequest, format_table, QuitApp, SECURITY_LEVELS
 
 
 config = None
@@ -108,6 +108,53 @@ def action_zone_command():
 #
 #  ZONE COMMANDS START HERE
 #
+
+
+def zone_command_dns_list(account, zone):
+    data = request(account, 'rec_load_all', {'z': zone.domain})
+    recs = data['response']['recs']['objs']
+
+    output = [['Type', 'Subdomain', 'Location', 'SSL', 'TTL', 'Pri', 'Cloud']]
+    for rec in recs:
+        output.append((rec['type'], rec['name'], rec['content'],
+                      'on' if rec['props']['ssl'] else 'off',
+                      'auto' if rec['auto_ttl'] else rec['ttl'],
+                      '' if rec['prio'] is None else rec['prio'],
+                      'on' if rec['props']['cloud_on'] else 'off' if rec['props']['proxiable'] else "can't"))
+    print(format_table(output))
+
+
+def zone_command_dns_add(account, zone):
+    params = {
+        'zone':         zone.domain,
+        'type':         cmdline.dns_type,
+        'name':         cmdline.dns_name,
+        'content':      cmdline.dns_location,
+        'service_mode': int(cmdline.dns_cloud_on),
+    }
+    request(account, 'rec_set', params)
+    print('Added record.')
+
+
+def zone_command_dns_update(account, zone):
+    params = {
+        'hosts': cmdline.dns_name,
+        'ip':    cmdline.dns_location,
+    }
+    request(account, 'DIUP', params)
+    print('Updated record.')
+
+
+def zone_command_dns_delete(account, zone):
+    params = {
+        'zone':    zone.domain,
+        'name':    cmdline.dns_name,
+    }
+    if cmdline.dns_location is not None:
+        params['content'] = cmdline.dns_location
+
+    request(account, 'rec_del', params)
+    print('Deleted record.')
 
 
 def zone_command_level(account, zone):
