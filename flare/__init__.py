@@ -211,15 +211,17 @@ def zone_command_dns_edit(account, zone):
 
 
 def zone_command_dns_delete(account, zone):
-    params = {
-        'zone':    zone.domain,
-        'name':    record_name_api_readable(zone, cmdline.dns_name),
-    }
-    if cmdline.dns_location is not None:
-        params['content'] = cmdline.dns_location
+    data = request(account, 'rec_load_all', {'z': zone.domain})
+    recs = data['response']['recs']['objs']
+    recs = match_record_pattern(zone, recs, cmdline.dns_filter)
 
-    request(account, 'rec_del', params)
-    print('Deleted record.')
+    for rec in recs:
+        params = {'z': zone.domain, 'id': rec['rec_id']}
+        data = request(account, 'rec_delete', params)
+
+    print('Deleted {} records.'.format(len(recs)))
+    if recs:
+        print(make_record_table(zone, recs))
 
 
 def zone_command_level(account, zone):
