@@ -18,10 +18,10 @@ Local config management:
     Update locally-stored account metedata
 
 Zone commands:
-  flare <zone> dns list
-  flare <zone> dns add <type> <name> <location> [--cloud (on | off)]
-  flare <zone> dns update <name> <location>
-  flare <zone> dns delete <name> [<location>]
+  flare <zone> dns -l
+  flare <zone> dns -a <type> <name> <location> [--cloud (on | off)]
+  flare <zone> dns -e <name> <location>
+  flare <zone> dns -d <name> [<location>]
     View or modify DNS records for the given zone.
 
   flare <zone> level [<new-level>]
@@ -89,10 +89,11 @@ class CommandLine:
             ret.zone = arg
             ret.zone_command = ret._next(missing='Need command name.', globs=True)
             if ret.zone_command == 'dns':
-                ret.zone_command = 'dns_' + ret._next(missing='Need DNS command name.', choices=['list', 'add', 'update', 'delete'])
-                if ret.zone_command == 'dns_list':
-                    pass
-                elif ret.zone_command == 'dns_add':
+                dns_command = ret._next(missing='Need DNS command.', choices=['-l', '-a', '-e', '-d'])
+                if dns_command == '-l':
+                    ret.zone_command = 'dns_list'
+                elif dns_command == '-a':
+                    ret.zone_command = 'dns_add'
                     ret.dns_type = ret._next(missing='Need record type.', choices=DNS_RECORD_TYPES)
                     ret.dns_name = ret._next(missing='Need record name.')
                     ret.dns_location = ret._next(missing='Need record location.')
@@ -106,10 +107,12 @@ class CommandLine:
                             ret.dns_cloud_on = arg == 'on'
                         else:
                             ret._error('Unexpected argument {!r}.'.format(arg))
-                elif ret.zone_command == 'dns_update':
+                elif dns_command == '-e':
+                    ret.zone_command = 'dns_edit'
                     ret.dns_name = ret._next(missing='Need record name.')
                     ret.dns_location = ret._next(missing='Need record location.')
-                elif ret.zone_command == 'dns_delete':
+                elif dns_command == '-d':
+                    ret.zone_command = 'dns_delete'
                     ret.dns_name = ret._next(missing='Need record name.')
                     ret.dns_location = ret._next()
             elif ret.zone_command == 'level':
