@@ -77,6 +77,21 @@ def match_record_pattern(zone, records, pattern):
     return ret
 
 
+def make_record_table(zone, records):
+    output = [('Type', 'Name', 'Location', 'SSL', 'TTL', 'Pri', 'Cloud')]
+    for rec in records:
+        output.append((
+            rec['type'],
+            record_name_human_readable(zone, rec['name']),
+            rec['content'],
+            'on' if rec['props']['ssl'] else 'off',
+            'auto' if rec['auto_ttl'] else rec['ttl'],
+            '' if rec['prio'] is None else rec['prio'],
+            'on' if rec['props']['cloud_on'] else 'off' if rec['props']['proxiable'] else "can't"
+        ))
+    return format_table(output)
+
+
 #
 #  ACTIONS START HERE
 #
@@ -142,14 +157,7 @@ def zone_command_dns_list(account, zone):
     data = request(account, 'rec_load_all', {'z': zone.domain})
     recs = data['response']['recs']['objs']
 
-    output = [['Type', 'Subdomain', 'Location', 'SSL', 'TTL', 'Pri', 'Cloud']]
-    for rec in recs:
-        output.append((rec['type'], rec['name'], rec['content'],
-                      'on' if rec['props']['ssl'] else 'off',
-                      'auto' if rec['auto_ttl'] else rec['ttl'],
-                      '' if rec['prio'] is None else rec['prio'],
-                      'on' if rec['props']['cloud_on'] else 'off' if rec['props']['proxiable'] else "can't"))
-    print(format_table(output))
+    print(make_record_table(zone, recs))
 
 
 def _update_params_with_cmdline_record_values(params):
