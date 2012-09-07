@@ -49,6 +49,34 @@ def get_account_and_zone(zone_name):
     raise QuitApp('Zone {!r} not found in any account.'.format(zone_name))
 
 
+def record_name_human_readable(zone, record_name):
+    if record_name == zone.domain:
+        return '@'
+    if record_name.endswith('.' + zone.domain):
+        return record_name[: -len(zone.domain) - 1]
+    return record_name
+
+
+record_name_api_readable = record_name_human_readable
+
+
+def match_record_pattern(zone, records, pattern):
+    name, sep, rest = pattern.partition('@')
+    location = None
+    if sep:
+        location = rest
+
+    ret = []
+    for rec in records:
+        rec_name = record_name_api_readable(zone, rec['name'])
+        if name != rec_name:
+            continue
+        if location is not None and location.lower() != rec['content'].lower():
+            continue
+        ret.append(rec)
+    return ret
+
+
 #
 #  ACTIONS START HERE
 #
@@ -124,31 +152,55 @@ def zone_command_dns_list(account, zone):
     print(format_table(output))
 
 
+def _update_params_with_cmdline_record_values(params):
+    if cmdline.dns_type is not None:
+        params['type'] = cmdline.dns_type
+    if cmdline.dns_name is not None:
+        params['name'] = cmdline.dns_name
+    if cmdline.dns_location is not None:
+        params['content'] = cmdline.dns_location
+    if cmdline.dns_ttl is not None:
+        params['ttl'] = cmdline.dns_ttl
+    if cmdline.dns_cloud_on is not None:
+        params['service_mode'] = int(cmdline.dns_cloud_on)
+    if cmdline.dns_prio is not None:
+        params['prio'] = cmdline.dns_prio
+
+
+def _update_params_with_record_values(params, zone, record):
+    # The API requires you to specify these, even if they're just set to their current values.
+    params['type'] = record['type']
+    params['name'] = record_name_api_readable(zone, record['name'])
+    params['content'] = record['content']
+    params['ttl'] = record['ttl']
+
+
 def zone_command_dns_add(account, zone):
-    params = {
-        'zone':         zone.domain,
-        'type':         cmdline.dns_type,
-        'name':         cmdline.dns_name,
-        'content':      cmdline.dns_location,
-        'service_mode': int(cmdline.dns_cloud_on),
-    }
-    request(account, 'rec_set', params)
+    params = {'z': zone.domain}
+    _update_params_with_cmdline_record_values(params)
+
+    request(account, 'rec_new', params)
     print('Added record.')
 
 
-def zone_command_dns_update(account, zone):
-    params = {
-        'hosts': cmdline.dns_name,
-        'ip':    cmdline.dns_location,
-    }
-    request(account, 'DIUP', params)
-    print('Updated record.')
+def zone_command_dns_edit(account, zone):
+    data = request(account, 'rec_load_all', {'z': zone.domain})
+    recs = data['response']['recs']['objs']
+    recs = match_record_pattern(zone, recs, cmdline.dns_filter)
+
+    for rec in recs:
+        params = {'z': zone.domain, 'id': rec['rec_id']}
+        _update_params_with_record_values(params, zone, rec)
+        _update_params_with_cmdline_record_values(params)
+        request(account, 'rec_edit', params)
+
+    print('Updated records.')
 
 
 def zone_command_dns_delete(account, zone):
     params = {
         'zone':    zone.domain,
-        'name':    cmdline.dns_name,
+        'name':    record_name_api_readable(zone, cmdline.dns_name),
     }
     if cmdline.dns_location is not None:
         params['content'] = cmdline.dns_location
