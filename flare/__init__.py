@@ -196,7 +196,8 @@ def zone_command_dns_add(account, zone):
 def zone_command_dns_edit(account, zone):
     data = request(account, 'rec_load_all', {'z': zone.domain})
     recs = data['response']['recs']['objs']
-    recs = match_record_pattern(zone, recs, cmdline.dns_filter)
+    if cmdline.dns_filter is not None:
+        recs = match_record_pattern(zone, recs, cmdline.dns_filter)
 
     objs = []
 

@@ -20,7 +20,7 @@ Local config management:
 Zone commands:
   flare <zone> dns -l [<record-filter>]
   flare <zone> dns -a <record-values>
-  flare <zone> dns -e <record-filter> <record-values>
+  flare <zone> dns -e [<record-filter>] <record-values>
   flare <zone> dns -d <record-filter>
     List/add/edit/delete DNS records for the given zone.
       <record-filter> - A set of criteria identifying the records to modify.
@@ -135,7 +135,12 @@ class CommandLine:
                 self._parse_record_values()
             elif dns_command == '-e':
                 self.zone_command = 'dns_edit'
-                self.dns_filter = self._next(missing='Need record filter.')
+                arg = self._next(missing='Need record filter.')
+                if arg[0] == '-':
+                    self.dns_filter = None
+                    self._prev()
+                else:
+                    self.dns_filter = arg
                 self._parse_record_values()
             elif dns_command == '-d':
                 self.zone_command = 'dns_delete'
