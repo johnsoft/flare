@@ -61,7 +61,7 @@ record_name_api_readable = record_name_human_readable
 
 
 def match_record_pattern(zone, records, pattern):
-    name, sep, rest = pattern.partition('@')
+    name, sep, rest = pattern.partition(':')
     location = None
     if sep:
         location = rest
@@ -69,9 +69,9 @@ def match_record_pattern(zone, records, pattern):
     ret = []
     for rec in records:
         rec_name = record_name_api_readable(zone, rec['name'])
-        if name != rec_name:
+        if name and name.lower() != rec_name.lower():
             continue
-        if location is not None and location.lower() != rec['content'].lower():
+        if location and location.lower() != rec['content'].lower():
             continue
         ret.append(rec)
     return ret
@@ -156,6 +156,8 @@ def action_zone_command():
 def zone_command_dns_list(account, zone):
     data = request(account, 'rec_load_all', {'z': zone.domain})
     recs = data['response']['recs']['objs']
+    if cmdline.dns_filter is not None:
+        recs = match_record_pattern(zone, recs, cmdline.dns_filter)
 
     print(make_record_table(zone, recs))
 

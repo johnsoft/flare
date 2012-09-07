@@ -2,7 +2,7 @@ from . import __version__
 from .utils import QuitApp, DNS_RECORD_TYPES, SECURITY_LEVELS
 
 
-USAGE = 'flare ' + __version__ + """
+USAGE = 'flare ' + __version__ + r"""
 
 Local config management:
   flare -a <account> <email> <api-key>
@@ -18,14 +18,13 @@ Local config management:
     Update locally-stored account metedata
 
 Zone commands:
-  flare <zone> dns -l
+  flare <zone> dns -l [<record-filter>]
   flare <zone> dns -a <record-values>
   flare <zone> dns -e <record-filter> <record-values>
   flare <zone> dns -d <record-filter>
     List/add/edit/delete DNS records for the given zone.
-      <record-filter> - The record to modify. If <location> isn't given, all
-                        records matching <name> are modified/deleted in turn.
-        syntax - <name>[@location]
+      <record-filter> - A set of criteria identifying the records to modify.
+        syntax - [<name>][:<location>]
       <record-values> - The record's new values.
         syntax - [--type (A | CNAME | MX)] [--name <name>] \
                  [--location <location>] [--ttl (auto | <seconds>)] \
@@ -130,16 +129,17 @@ class CommandLine:
             dns_command = self._next(missing='Need DNS command.', choices=['-l', '-a', '-e', '-d'])
             if dns_command == '-l':
                 self.zone_command = 'dns_list'
+                self.dns_filter = self._next()
             elif dns_command == '-a':
                 self.zone_command = 'dns_add'
                 self._parse_record_values()
             elif dns_command == '-e':
                 self.zone_command = 'dns_edit'
-                self._parse_record_filter()
+                self.dns_filter = self._next(missing='Need record filter.')
                 self._parse_record_values()
             elif dns_command == '-d':
                 self.zone_command = 'dns_delete'
-                self._parse_record_filter()
+                self.dns_filter = self._next(missing='Need record filter.')
         elif self.zone_command == 'level':
             self.new_level = self._next()
             if self.new_level is not None and self.new_level not in SECURITY_LEVELS:
@@ -147,9 +147,6 @@ class CommandLine:
                     self.new_level, ', '.join(SECURITY_LEVELS)))
         else:
             self._error('Unknown command {!r}.'.format(self.zone_command))
-
-    def _parse_record_filter(self):
-        self.dns_filter = self._next(missing='Need record filter.')
 
     def _parse_record_values(self):
         self.dns_type = None
