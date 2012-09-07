@@ -53,6 +53,10 @@ class CommandLine:
                 self._error(missing, choices)
             return None
 
+    def _next_bool(self, *, missing=None):
+        text = self._next(missing=missing, choices=('on', 'off'))
+        return text == 'on'
+
     def _glob_arg(self, arg):
         is_glob = True
         if arg == '--dump':
@@ -103,7 +107,7 @@ class CommandLine:
                         if not arg:
                             break
                         elif arg == '--cloud':
-                            arg = ret._next(missing='Expected on or off after {}.'.format(arg), choices=['on', 'off'])
+                            arg = ret._next_bool(missing='Invalid option after {}.'.format(arg))
                             ret.dns_cloud_on = arg == 'on'
                         else:
                             ret._error('Unexpected argument {!r}.'.format(arg))
