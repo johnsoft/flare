@@ -9,7 +9,7 @@ SECURITY_LEVELS = {
     'low':  'Low',
     'med':  'Medium',
     'high': 'High',
-    'help': '',
+    'help': "I'm under attack!",
 }
 
 

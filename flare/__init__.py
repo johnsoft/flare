@@ -160,7 +160,10 @@ def zone_command_dns_delete(account, zone):
 def zone_command_level(account, zone):
     data = request(account, 'stats', {'z': zone.domain, 'interval': 40})
     stats = data['response']['result']['objs'][0]
-    print('Current level: {}'.format(stats['userSecuritySetting']))
+
+    level = stats['userSecuritySetting']
+    level = level.replace('\u2019', "'")  # fix unicode bug on some terminals
+    print('Current level: {}'.format(level))
 
     if cmdline.new_level:
         data = request(account, 'sec_lvl', {'z': zone.domain, 'v': cmdline.new_level})
