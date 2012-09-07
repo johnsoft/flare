@@ -196,13 +196,18 @@ def zone_command_dns_edit(account, zone):
     recs = data['response']['recs']['objs']
     recs = match_record_pattern(zone, recs, cmdline.dns_filter)
 
+    objs = []
+
     for rec in recs:
         params = {'z': zone.domain, 'id': rec['rec_id']}
         _update_params_with_record_values(params, zone, rec)
         _update_params_with_cmdline_record_values(params)
-        request(account, 'rec_edit', params)
+        data = request(account, 'rec_edit', params)
+        objs.append(data['response']['rec']['obj'])
 
-    print('Updated records.')
+    print('Updated {} records.'.format(len(objs)))
+    if objs:
+        print(make_record_table(zone, objs))
 
 
 def zone_command_dns_delete(account, zone):
