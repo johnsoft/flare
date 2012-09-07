@@ -118,7 +118,7 @@ class CommandLine:
             self._parse_zone_command()
 
         arg = self._next(globs=True)
-        if arg:
+        if arg is not None:
             self._error('Unexpected argument {!r}.'.format(arg))
 
         return self
@@ -165,7 +165,7 @@ class CommandLine:
             arg = self._next(globs=True)
             if arg is None:
                 break
-            if arg == '--type':
+            elif arg == '--type':
                 self.dns_type = self._next(missing='Need type after {!r}'.format(arg), choices=DNS_RECORD_TYPES)
             elif arg == '--name':
                 self.dns_name = self._next(missing='Need name after {!r}'.format(arg))

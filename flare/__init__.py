@@ -235,6 +235,6 @@ def zone_command_level(account, zone):
     level = level.replace('\u2019', "'")  # fix unicode bug on some terminals
     print('Current level: {}'.format(level))
 
-    if cmdline.new_level:
+    if cmdline.new_level is not None:
         data = request(account, 'sec_lvl', {'z': zone.domain, 'v': cmdline.new_level})
         print('New level: {}'.format(SECURITY_LEVELS[cmdline.new_level]))
