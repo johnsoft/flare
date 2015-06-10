@@ -57,7 +57,10 @@ def record_name_human_readable(zone, record_name):
     return record_name
 
 
-record_name_api_readable = record_name_human_readable
+def record_name_api_readable(zone, record_name):
+    if record_name == '*':
+        return '*.' + zone.domain
+    return record_name_human_readable(zone, record_name)
 
 
 def match_record_pattern(zone, records, pattern):
