@@ -41,14 +41,16 @@ class Config:
     @classmethod
     def load(cls):
         ini = ConfigParser(interpolation=None)
-        if os.path.exists(CONFIG_FILE):
-            try:
-                with open(CONFIG_FILE) as file:
-                    ini.read_file(file)
-                return cls.ini_to_config(ini)
-            except Exception:
-                print('Warning - corrupt or unreadable config file, reverting to defaults.')
-                return cls()
+        if not os.path.exists(CONFIG_FILE):
+            return cls()  # first run - just use a fresh config
+
+        try:
+            with open(CONFIG_FILE) as file:
+                ini.read_file(file)
+            return cls.ini_to_config(ini)
+        except Exception:
+            print('Warning - corrupt or unreadable config file, reverting to defaults.')
+            return cls()
 
     @classmethod
     def ini_to_config(cls, ini):
