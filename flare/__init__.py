@@ -189,7 +189,11 @@ def _update_params_with_record_values(params, zone, record):
 
 
 def zone_command_dns_add(account, zone):
-    params = {'z': zone.domain}
+    params = {
+        'z': zone.domain,
+        'type': 'A',
+        'ttl': 1,
+    }
     _update_params_with_cmdline_record_values(params)
 
     data = request(account, 'rec_new', params)
