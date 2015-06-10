@@ -192,8 +192,10 @@ def zone_command_dns_add(account, zone):
     params = {'z': zone.domain}
     _update_params_with_cmdline_record_values(params)
 
-    request(account, 'rec_new', params)
+    data = request(account, 'rec_new', params)
+    obj = data['response']['rec']['obj']
     print('Added record.')
+    print(make_record_table(zone, [obj]))
 
 
 def zone_command_dns_edit(account, zone):
